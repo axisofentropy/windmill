@@ -55,13 +55,14 @@ jobs:
         # Replace dots in the repo name with the plus sign
         run: |
           REPO=$(echo ${{ github.repository }} | sed 's/\./+/g')
-          echo "EXPECTED_URL=${{ inputs.server }}/github.com/$REPO/pull/$PR_NUMBER" >> $GITHUB_ENV
+          echo "EXPECTED_URL=https://app.uffizzi.com/github.com/$REPO/pull/$PR_NUMBER" >> $GITHUB_ENV
 
       - name: Re-Render Compose File
         run: |
           OAUTH_JSON_BASE64=${{ secrets.OAUTH_JSON_BASE64 }}
           export OAUTH_JSON_BASE64
           envsubst '${OAUTH_JSON_BASE64} ${EXPECTED_URL}' < docker-compose.rendered.yml | tee docker-compose.rendered.yml
+          cat docker-compose.rendered.yml
 
       - name: Hash Rendered Compose File
         id: hash
