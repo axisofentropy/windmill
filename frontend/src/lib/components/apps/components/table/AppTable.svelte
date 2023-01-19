@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getContext } from 'svelte'
+	import { getContext, onMount } from 'svelte'
 	import type { Output } from '../../rx'
 	import type { AppEditorContext, BaseAppComponent, ButtonComponent } from '../../types'
 	import InputValue from '../helpers/InputValue.svelte'
@@ -27,12 +27,11 @@
 
 	let search: 'By Runnable' | 'By Component' | 'Disabled' | undefined = undefined
 	let searchValue = ''
-
 	let pagination: boolean | undefined = true
 
 	$: setSearch(searchValue)
 
-	function setSearch(srch) {
+	function setSearch(srch: string) {
 		outputs?.search?.set(srch)
 	}
 
@@ -50,14 +49,24 @@
 	let selectedRowIndex = -1
 
 	function toggleRow(row: Record<string, any>, rowIndex: number) {
-		if (selectedRowIndex === rowIndex) {
-			selectedRowIndex = -1
-			outputs.selectedRow.set(null)
-		} else {
+		if (selectedRowIndex !== rowIndex) {
 			selectedRowIndex = rowIndex
 			outputs?.selectedRow.set(row.original)
 		}
 	}
+
+	let mounted = false
+	onMount(() => {
+		mounted = true
+	})
+
+	$: selectedRowIndex === -1 &&
+		Array.isArray(result) &&
+		result.length > 0 &&
+		// We need to wait until the component is mounted so the world is created
+		mounted &&
+		outputs &&
+		toggleRow({ original: result[0] }, 0)
 
 	function setOptions(filteredResult: Array<Record<string, any>>) {
 		if (!Array.isArray(result)) {
@@ -133,7 +142,7 @@
 
 			<div class="overflow-x-auto flex-1 w-full">
 				<table class="relative w-full border-b border-b-gray-200">
-					<thead class="sticky top-0 bg-gray-50 text-left">
+					<thead class="sticky top-0 z-40 bg-gray-50 text-left">
 						{#each $table.getHeaderGroups() as headerGroup}
 							<tr class="divide-x">
 								{#each headerGroup.headers as header}
@@ -153,9 +162,7 @@
 								{/each}
 								{#if actionButtons.length > 0}
 									<th class="!p-0">
-										<span class="block px-4 py-4 text-sm font-semibold border-b">
-											Actions
-										</span>
+										<span class="block px-4 py-4 text-sm font-semibold border-b"> Actions </span>
 									</th>
 								{/if}
 							</tr>
@@ -165,11 +172,11 @@
 						{#each $table.getRowModel().rows as row, rowIndex (row.id)}
 							<tr
 								class={classNames(
+									'last-of-type:!border-b-0',
 									selectedRowIndex === rowIndex
 										? 'bg-blue-100 hover:bg-blue-200'
 										: 'hover:bg-blue-50',
-									'divide-x',
-									'border-b w-full',
+									'divide-x w-full',
 									selectedRowIndex === rowIndex
 										? 'divide-blue-200 hover:divide-blue-300'
 										: 'divide-gray-200'
