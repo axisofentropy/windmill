@@ -45,11 +45,13 @@ jobs:
             fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/preview-spec.zip`, Buffer.from(download.data));
       - name: 'Unzip artifact'
         run: unzip preview-spec.zip
-      - name: Read Event into ENV
+      - name: Read Event Object into ENV
         run: |
           echo 'EVENT_JSON<<EOF' >> $GITHUB_ENV
           cat event.json >> $GITHUB_ENV
           echo 'EOF' >> $GITHUB_ENV
+      - name: Read PR Number From Event Object
+        run: echo "PR_NUMBER=${{ fromJSON(env.EVENT_JSON).number }}" >> $GITHUB_ENV
 
       - name: Hash Rendered Compose File
         id: hash
